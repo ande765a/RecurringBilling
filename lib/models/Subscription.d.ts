@@ -12,7 +12,10 @@ export interface ISubscription {
     cancelled: boolean;
     transactions: ITransaction[];
     reserve_delta: DateDelta;
-    createTransaction(opts: any): Promise<ITransaction>;
+    createTransaction(opts: {
+        due_date: Date;
+    }): Promise<ITransaction>;
     setExpirationDate(date: Date): Promise<any>;
     setPeriod(period: number): Promise<any>;
+    cancel(): Promise<any>;
 }

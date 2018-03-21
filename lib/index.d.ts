@@ -1,10 +1,24 @@
 import { ISubscription } from "./models/Subscription";
 import { ITransaction } from "./models/Transaction";
-export interface TransactionIO {
-    reserveTransaction(transaction: ITransaction): Promise<any>;
-    captureTransaction(transaction: ITransaction): Promise<any>;
-    createTransaction(opts: any): Promise<ITransaction>;
+import { IEmailSender } from "./email";
+export declare enum TransactionAction {
+    reserved = "reserved",
+    captured = "captured",
+    failed = "failed",
+    none = "none",
 }
-export declare function getTransactionActions(subscription: ISubscription, io: TransactionIO): never[] | undefined;
+export declare type TransactionResult = {
+    transaction: ITransaction;
+    action: TransactionAction;
+};
 export declare function calculateNextDueDate(subscription: ISubscription): Date;
-export declare function processSubscriptions(subscriptions: ISubscription[]): void;
+export declare const processSubscription: ({ emailSender }: {
+    emailSender: IEmailSender;
+}) => (subscription: ISubscription) => Promise<TransactionResult[]>;
+export declare type SubscriptionResult = {
+    subscription: ISubscription;
+    transactionResults: TransactionResult[];
+};
+export declare const processSubscriptions: (deps: {
+    emailSender: IEmailSender;
+}) => (subscriptions: ISubscription[]) => Promise<SubscriptionResult[]>;

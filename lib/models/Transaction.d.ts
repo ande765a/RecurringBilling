@@ -1,10 +1,10 @@
 import { ICustomer } from "./Customer";
 import { Price } from "./Price";
 export declare enum TransactionState {
-    "pending" = 0,
-    "reserved" = 1,
-    "captured" = 2,
-    "failing" = 3,
+    pending = "pending",
+    reserved = "reserved",
+    captured = "captured",
+    failed = "failed",
 }
 export interface ITransaction {
     id: string;
@@ -14,4 +14,5 @@ export interface ITransaction {
     due_date: Date;
     capture(): Promise<any>;
     reserve(): Promise<any>;
+    fail(): Promise<any>;
 }
