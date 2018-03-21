@@ -1,81 +1,21 @@
 import { ISubscription } from "./models/Subscription";
 import { TransactionState, ITransaction } from "./models/Transaction";
-import { BillingFrequency } from "./models/Plan";
 import { Currency } from "./models/Currency";
 import { addDateDelta, createDateDelta } from "./dates";
+import { BillingFrequency } from "./models/Plan";
+import { IEmailSender } from "./email";
 
-enum TransactionAction {
-  none = "none",
-  reserve = "reserve",
-  capture = "capture"
+export enum TransactionAction {
+  reserved = "reserved",
+  captured = "captured",
+  failed = "failed",
+  none = "none"
 }
 
-type TransactionResult = {
+export type TransactionResult = {
   transaction: ITransaction;
   action: TransactionAction;
 };
-
-export interface TransactionIO {
-  reserveTransaction(transaction: ITransaction): Promise<any>;
-  captureTransaction(transaction: ITransaction): Promise<any>;
-  createTransaction(opts: any): Promise<ITransaction>;
-}
-
-export function getTransactionActions(
-  subscription: ISubscription,
-  io: TransactionIO
-) {
-  const now = new Date(Date.now());
-  if (subscription.cancelled || subscription.expiration_date >= now) {
-    return [];
-  }
-
-  const results = subscription.transactions.map(async transaction => {
-    switch (transaction.state) {
-      case TransactionState.pending: {
-        const reserveDate = addDateDelta(
-          transaction.due_date,
-          subscription.reserve_delta
-        );
-        if (reserveDate >= now) {
-          try {
-            await transaction.reserve();
-          } catch (err) {
-            // - Send email reminder, if card is not up to date
-            // DunningPolicy
-          }
-        }
-      }
-      case TransactionState.reserved: {
-        if (transaction.due_date >= now) {
-          try {
-            await transaction.capture();
-            const nextDueDate = calculateNextDueDate(subscription);
-            await subscription.createTransaction({ due_date: nextDueDate });
-            await subscription.setExpirationDate(
-              addDateDelta(nextDueDate, createDateDelta({ days: 5 }))
-            );
-            await subscription.setPeriod(subscription.period + 1);
-
-            //await io.setExpirationDate(subscription);
-            //await mutableActions.setExpirationDate(calculateDueDate(subscription));
-          } catch (err) {
-            // Test
-          }
-        }
-      }
-      case TransactionState.failing: {
-        // Send email or something? Cancel subscription at some point.
-      }
-      default: {
-        return {
-          transaction,
-          action: TransactionAction.none
-        };
-      }
-    }
-  });
-}
 
 export function calculateNextDueDate(subscription: ISubscription) {
   const { start_date, period, plan } = subscription;
@@ -104,26 +44,106 @@ export function calculateNextDueDate(subscription: ISubscription) {
   }
 }
 
-/*calculateDueDate({
-  customer: {
-    id: "123"
-  },
-  plan: {
-    price: {
-      amount: 1000,
-      currency: Currency.DKK
-    },
-    frequency: BillingFrequency.monthly,
-    permissions: ["test"],
-    interval: 1
-  },
-  start_date: new Date(2017, 0, 31),
-  expiration_date: new Date(2018, 5, 20),
-  period: 0,
-  cancelled: false,
-  transactions: []
-});*/
+export const processSubscription = ({
+  emailSender
+}: {
+  emailSender: IEmailSender;
+}) => (subscription: ISubscription): Promise<TransactionResult[]> => {
+  const now = new Date(Date.now());
+  const transactionResults = subscription.transactions.map(
+    async transaction => {
+      switch (transaction.state) {
+        case TransactionState.pending: {
+          const reserveDate = addDateDelta(
+            transaction.due_date,
+            subscription.reserve_delta
+          );
+          if (reserveDate >= now) {
+            try {
+              await transaction.reserve();
+              return {
+                transaction,
+                action: TransactionAction.reserved
+              };
+            } catch (err) {
+              const { customer } = subscription;
+              await emailSender.sendEmail(
+                customer.email,
+                `
+            Hi ${customer.name}
+            We were unable to reserve the amount for maintaining your subscription for the next period.
+            Please check that your card information is up to date.
+            Best regards
+            SubReader
+            `
+              );
+              return {
+                transaction,
+                action: TransactionAction.failed
+              };
+            }
+          }
+        }
+        case TransactionState.reserved: {
+          if (transaction.due_date >= now) {
+            try {
+              await transaction.capture();
+              const nextDueDate = calculateNextDueDate(subscription);
+              await subscription.createTransaction({
+                due_date: nextDueDate
+              });
+              await subscription.setExpirationDate(
+                addDateDelta(nextDueDate, createDateDelta({ days: 5 }))
+              );
+              await subscription.setPeriod(subscription.period + 1);
 
-export function processSubscriptions(subscriptions: ISubscription[]) {
-  //return subscriptions.map(processSubscription);
-}
+              return {
+                transaction,
+                action: TransactionAction.captured
+              };
+            } catch (err) {
+              await transaction.fail();
+              return {
+                transaction,
+                action: TransactionAction.failed
+              };
+            }
+          }
+        }
+        default: {
+          return {
+            transaction,
+            action: TransactionAction.none
+          };
+        }
+      }
+    }
+  );
+  return Promise.all(transactionResults);
+};
+
+export type SubscriptionResult = {
+  subscription: ISubscription;
+  transactionResults: TransactionResult[];
+};
+
+export const processSubscriptions = (deps: { emailSender: IEmailSender }) => (
+  subscriptions: ISubscription[]
+): Promise<SubscriptionResult[]> => {
+  const now = new Date(Date.now());
+  const subscriptionResults = subscriptions
+    .filter(({ cancelled, expiration_date }) => {
+      if (cancelled || now >= expiration_date) {
+        return false;
+      }
+      return true;
+    })
+    .map(async subscription => {
+      const transactionResults = await processSubscription(deps)(subscription);
+      return {
+        subscription,
+        transactionResults
+      };
+    });
+  return Promise.all(subscriptionResults);
+};
