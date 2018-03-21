@@ -1,0 +1,27 @@
+{
+  "name": "recurring-billing",
+  "version": "1.0.0",
+  "description": "Generic recurring billing in Node.js",
+  "main": "index.js",
+  "scripts": {
+    "start": "tsc -w",
+    "build": "tsc",
+    "test": "tape ./tests/**/*.test.js | tap-spec"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ande765a/RecurringBilling.git"
+  },
+  "author": "Anders Bredgaard Thuesen <andersbthuesen@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ande765a/RecurringBilling/issues"
+  },
+  "homepage": "https://github.com/ande765a/RecurringBilling#readme",
+  "devDependencies": {
+    "@types/node": "^9.4.7",
+    "tap-spec": "^4.1.1",
+    "tape": "^4.9.0",
+    "typescript": "^2.7.2"
+  }
+}
