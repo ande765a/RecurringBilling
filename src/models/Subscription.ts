@@ -3,6 +3,7 @@ import { ICustomer } from "./Customer";
 import { ITransaction } from "./Transaction";
 import { IPlan } from "./Plan";
 import { DateDelta } from "../dates";
+import { BillingFrequency } from "./Plan";
 
 export interface ISubscription {
   id: string;
@@ -15,7 +16,8 @@ export interface ISubscription {
   transactions: ITransaction[];
   reserve_delta: DateDelta;
 
-  createTransaction(opts: any): Promise<ITransaction>;
+  createTransaction(opts: { due_date: Date }): Promise<ITransaction>;
   setExpirationDate(date: Date): Promise<any>;
   setPeriod(period: number): Promise<any>;
+  cancel(): Promise<any>;
 }
