@@ -2,7 +2,8 @@
   "name": "recurring-billing",
   "version": "1.0.0",
   "description": "Generic recurring billing in Node.js",
-  "main": "index.js",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
   "scripts": {
     "start": "tsc -w",
     "build": "tsc",
