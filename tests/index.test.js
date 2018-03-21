@@ -1,5 +1,5 @@
 const test = require("tape");
-const { calculateDueDate } = require("../lib");
+const { calculateNextDueDate } = require("../lib");
 
 const testPlan = {
   customer: {
@@ -28,7 +28,7 @@ test("calculating due date correctly", t => {
   };
 
   t.equal(
-    calculateDueDate(testPlan1).getTime(),
+    calculateNextDueDate(testPlan1).getTime(),
     new Date(2017, 1, 1).getTime(),
     "When frequency"
   );
@@ -39,7 +39,7 @@ test("calculating due date correctly", t => {
   };
 
   t.equal(
-    calculateDueDate(testPlan2).getTime(),
+    calculateNextDueDate(testPlan2).getTime(),
     new Date(2017, 2, 3).getTime(),
     "Dates should be equal"
   );
