@@ -11,11 +11,11 @@ export enum TransactionState {
 export interface ITransaction {
   id: string;
   price: Price;
-  customer: ICustomer;
   state: TransactionState;
   due_date: Date;
 
   capture(): Promise<any>;
   reserve(): Promise<any>;
+  void(): Promise<any>;
   fail(): Promise<any>;
 }

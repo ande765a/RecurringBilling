@@ -56,7 +56,7 @@ export const processSubscription = ({
         case TransactionState.pending: {
           const reserveDate = addDateDelta(
             transaction.due_date,
-            subscription.reserve_delta
+            subscription.plan.reserve_delta
           );
           if (reserveDate >= now) {
             try {
