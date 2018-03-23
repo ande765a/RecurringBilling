@@ -1,14 +1,8 @@
 import { Price } from "./Price";
 import { DateDelta } from "../dates";
-export declare enum BillingFrequency {
-    daily = "daily",
-    monthly = "monthly",
-    yearly = "yearly",
-}
 export interface IPlan {
     id: string;
     price: Price;
-    frequency: BillingFrequency;
-    interval: number;
+    billing_delta: DateDelta;
     reserve_delta: DateDelta;
 }

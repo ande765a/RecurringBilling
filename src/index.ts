@@ -1,8 +1,7 @@
 import { ISubscription } from "./models/Subscription";
 import { TransactionState, ITransaction } from "./models/Transaction";
 import { Currency } from "./models/Currency";
-import { addDateDelta, createDateDelta } from "./dates";
-import { BillingFrequency } from "./models/Plan";
+import { addDateDelta, createDateDelta, multiplyDelta } from "./dates";
 import { IEmailSender } from "./email";
 
 export enum TransactionAction {
@@ -19,29 +18,10 @@ export type TransactionResult = {
 
 export function calculateNextDueDate(subscription: ISubscription) {
   const { start_date, period, plan } = subscription;
-  switch (plan.frequency) {
-    case BillingFrequency.daily: {
-      return new Date(
-        start_date.getFullYear(),
-        start_date.getMonth(),
-        start_date.getDate() + (period + 1) * plan.interval
-      );
-    }
-    case BillingFrequency.monthly: {
-      return new Date(
-        start_date.getFullYear(),
-        start_date.getMonth() + (period + 1) * plan.interval,
-        start_date.getDate()
-      );
-    }
-    case BillingFrequency.yearly: {
-      return new Date(
-        start_date.getFullYear() + (period + 1) * plan.interval,
-        start_date.getMonth(),
-        start_date.getDate()
-      );
-    }
-  }
+  return addDateDelta(
+    start_date,
+    multiplyDelta(period + 1, plan.billing_interval)
+  );
 }
 
 export const processSubscription = ({

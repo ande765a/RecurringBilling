@@ -31,3 +31,15 @@ export function addDateDelta(date: Date, delta: DateDelta): Date {
     date.getMilliseconds() + delta.milliseconds
   );
 }
+
+export function multiplyDelta(amount: number, delta: DateDelta): DateDelta {
+  return {
+    milliseconds: amount * delta.milliseconds,
+    seconds: amount * delta.seconds,
+    minutes: amount * delta.minutes,
+    hours: amount * delta.hours,
+    days: amount * delta.days,
+    months: amount * delta.months,
+    years: amount * delta.years
+  };
+}

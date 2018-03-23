@@ -3,7 +3,6 @@ import { ICustomer } from "./Customer";
 import { ITransaction } from "./Transaction";
 import { IPlan } from "./Plan";
 import { DateDelta } from "../dates";
-import { BillingFrequency } from "./Plan";
 
 export interface ISubscription {
   id: string;

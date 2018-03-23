@@ -17,3 +17,4 @@ export declare function createDateDelta({milliseconds, seconds, minutes, hours, 
     years?: number;
 }): DateDelta;
 export declare function addDateDelta(date: Date, delta: DateDelta): Date;
+export declare function multiplyDelta(amount: number, delta: DateDelta): DateDelta;
